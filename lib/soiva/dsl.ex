@@ -292,6 +292,12 @@ defmodule Soiva.DSL do
     :ok
   end
 
+  # TUI
+
+  def tui do
+    Soiva.TUI.start()
+  end
+
   # Time helpers re-exported for DSL use
   defdelegate curve(shape, opts \\ []), to: Soiva.Time
   defdelegate prob(opts), to: Soiva.Time

@@ -13,6 +13,7 @@ defmodule Soiva.Pattern do
     :name,
     events: [],
     time_fn: &Time.linear/2,
+    time_spec: :linear,
     synth: :default,
     human: 0.0,
     swing: 0.5,
@@ -46,6 +47,8 @@ defmodule Soiva.Pattern do
 
   def get_events(name), do: call(name, :get_events)
 
+  def get_info(name), do: call(name, :get_info)
+
   defp call(name, msg) do
     case Registry.lookup(Soiva.PatternRegistry, name) do
       [{pid, _}] -> GenServer.call(pid, msg)
@@ -71,6 +74,7 @@ defmodule Soiva.Pattern do
       name: name,
       events: events,
       time_fn: time_fn,
+      time_spec: time_spec,
       synth: synth,
       human: human
     }
@@ -85,6 +89,19 @@ defmodule Soiva.Pattern do
 
   def handle_call(:get_events, _from, state), do: {:reply, state.events, state}
 
+  def handle_call(:get_info, _from, state) do
+    info = %{
+      name: state.name,
+      synth: state.synth,
+      time_spec: state.time_spec,
+      paused: state.paused,
+      tick: state.tick,
+      event_count: length(state.events)
+    }
+
+    {:reply, info, state}
+  end
+
   def handle_call({:morph, changes}, _from, state) do
     state =
       Enum.reduce(changes, state, fn
@@ -96,7 +113,7 @@ defmodule Soiva.Pattern do
           %{s | events: events, tick: 0}
 
         {:time, time_spec}, s ->
-          %{s | time_fn: Time.resolve(time_spec)}
+          %{s | time_fn: Time.resolve(time_spec), time_spec: time_spec}
 
         {:synth, synth}, s ->
           %{s | synth: synth}
